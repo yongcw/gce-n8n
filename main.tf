@@ -30,18 +30,25 @@ resource "google_compute_instance" "n8n_vm" {
 
   metadata_startup_script = <<-EOT
     #!/bin/bash
-    # 1. Update and install Docker
+    # 1. Create 2GB Swap File (Prevents crashes on e2-small)
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+    # 2. Update and install Docker
     apt-get update && apt-get install -y docker.io
     systemctl enable --now docker
 
-    # 2. Add the default user to the docker group so they don't need sudo
+    # 3. Add the default user to the docker group
     usermod -aG docker ubuntu
 
-    # 3. Setup folder and PERMISSIONS
+    # 4. Setup folder and PERMISSIONS
     mkdir -p /home/ubuntu/n8n-data
     chown -R 1000:1000 /home/ubuntu/n8n-data
 
-    # 4. Start n8n container
+    # 5. Start n8n container
     docker run -d --name n8n --restart always \
       -p 5678:5678 \
       -v /home/ubuntu/n8n-data:/home/node/.n8n \
