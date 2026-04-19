@@ -7,22 +7,31 @@ variable "project_id" {
   type = string
 }
 
+# 1. THE GATE (Firewall)
 resource "google_compute_firewall" "n8n_firewall" {
   name    = "allow-n8n-web-ui"
   network = "default"
+
   allow {
     protocol = "tcp"
-    ports    = ["5678", "80", "443"]
+    # Unified list: 80/443 for HTTPS, 5678 for n8n dashboard
+    ports    = ["80", "443", "5678"]
   }
+
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["n8n-server"]
+  # This MUST match the tag on the VM below
+  target_tags   = ["n8n-node"] 
 }
 
+# 2. THE SERVER (VM)
 resource "google_compute_instance" "n8n_vm" {
   name         = "n8n-server"
   machine_type = "e2-small"
   zone         = "us-central1-a"
-  tags         = ["n8n-server"]
+  
+  # This TAG is what opens the ports. 
+  # If this is missing or misspelled, HTTPS will fail.
+  tags         = ["n8n-node"] 
 
   boot_disk {
     initialize_params {
@@ -34,7 +43,7 @@ resource "google_compute_instance" "n8n_vm" {
   network_interface {
     network = "default"
     access_config {
-      network_tier = "STANDARD" # Cheaper than Premium
+      network_tier = "STANDARD" 
     }
   }
 
@@ -46,7 +55,7 @@ resource "google_compute_instance" "n8n_vm" {
 
   metadata_startup_script = <<-EOT
     #!/bin/bash
-    # Create Swap to prevent crashes
+    # Create Swap (Emergency RAM)
     fallocate -l 2G /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
@@ -57,7 +66,7 @@ resource "google_compute_instance" "n8n_vm" {
     apt-get update && apt-get install -y docker.io
     systemctl enable --now docker
 
-    # Setup Permissions
+    # Prepare data folder
     mkdir -p /home/ubuntu/n8n-data
     chown -R 1000:1000 /home/ubuntu/n8n-data
   EOT
