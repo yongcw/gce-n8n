@@ -3,10 +3,32 @@ provider "google" {
   region  = "us-central1"
 }
 
+variable "project_id" {
+  description = "The GCP Project ID"
+  type        = string
+}
+
+# 1. Firewall Rule to allow n8n traffic (Port 5678)
+resource "google_compute_firewall" "n8n_firewall" {
+  name    = "allow-n8n-web-ui"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["5678"]
+  }
+
+  # Allows access from any computer on the internet
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["n8n-server"]
+}
+
+# 2. The Compute Instance
 resource "google_compute_instance" "n8n_vm" {
   name         = "n8n-server"
-  machine_type = "e2-small"
+  machine_type = "e2-small"      # 2GB RAM (Stable for n8n)
   zone         = "us-central1-a"
+  tags         = ["n8n-server"]  # Connects VM to the firewall rule above
 
   boot_disk {
     initialize_params {
@@ -18,19 +40,20 @@ resource "google_compute_instance" "n8n_vm" {
   network_interface {
     network = "default"
     access_config {
-      network_tier = "STANDARD"
+      # Leaving this empty assigns an Ephemeral Public IP (Required for DuckDNS)
+      network_tier = "STANDARD" 
     }
   }
 
   scheduling {
-    preemptible        = true
+    preemptible        = true    # Keeps costs low (~$0.19/day)
     provisioning_model = "SPOT"
     automatic_restart  = false
   }
 
   metadata_startup_script = <<-EOT
     #!/bin/bash
-    # 1. Create 2GB Swap File (Prevents crashes on e2-small)
+    # 1. Create 2GB Swap File (Prevents crashes on smaller machines)
     fallocate -l 2G /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
@@ -41,19 +64,9 @@ resource "google_compute_instance" "n8n_vm" {
     apt-get update && apt-get install -y docker.io
     systemctl enable --now docker
 
-    # 3. Add the default user to the docker group
-    usermod -aG docker ubuntu
-
-    # 4. Setup folder and PERMISSIONS
+    # 3. Setup folder and PERMISSIONS
     mkdir -p /home/ubuntu/n8n-data
     chown -R 1000:1000 /home/ubuntu/n8n-data
-
-    # 5. Start n8n container
-    docker run -d --name n8n --restart always \
-      -p 5678:5678 \
-      -v /home/ubuntu/n8n-data:/home/node/.n8n \
-      -e TZ=Asia/Singapore \
-      n8nio/n8n
   EOT
 }
 
