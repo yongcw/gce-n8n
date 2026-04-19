@@ -29,7 +29,7 @@ We will use **Google Cloud Shell** to provision the server using Terraform.
    gcloud services enable compute.googleapis.com
 
    # 2. Clone the deployment repository
-   git clone [https://github.com/zalzah00/gce-n8n.git](https://github.com/zalzah00/gce-n8n.git)
+   git clone https://github.com/zalzah00/gce-n8n.git
    cd gce-n8n
 
    # 3. Initialize and apply Terraform
