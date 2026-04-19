@@ -49,8 +49,8 @@ Once you are **inside** the server terminal (prompt says `ubuntu@n8n-server`), c
 
 ```bash
 # --- ⚠️ EDIT THE TWO LINES BELOW ⚠️ ---
-DOMAIN="n8n-sawi"
-TOKEN="5d864764-3426-4c81-a646-a3c9e82982f5"
+DOMAIN="your-own-DUCKDNS-domain"
+TOKEN="your-own-DUCKDNS-token"
 # --------------------------------------
 
 # 1. Update DuckDNS to point to this server's IP
