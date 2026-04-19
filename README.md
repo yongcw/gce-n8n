@@ -49,38 +49,49 @@ Once you are **inside** the server terminal (prompt says `ubuntu@n8n-server`), c
 
 ```bash
 # --- ⚠️ EDIT THE TWO LINES BELOW ⚠️ ---
-DOMAIN="your-own-DUCKDNS-domain"
-TOKEN="your-own-DUCKDNS-token"
+DOMAIN="your-subdomain-here"
+TOKEN="your-token-here"
 # --------------------------------------
 
-# 1. Update DuckDNS to point to this server's IP
-echo "Linking $DOMAIN.duckdns.org to this server..."
-curl -s "https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ip="
+# 1. Clean up any existing attempts
+sudo docker stop n8n caddy || true
+sudo docker rm n8n caddy || true
+sudo docker network rm n8n-bridge || true
 
-# 2. Setup the HTTPS config (Caddyfile)
+# 2. Create the private bridge network
+sudo docker network create n8n-bridge
+
+# 3. Force initial DuckDNS Sync
+IP=$(curl -s http://checkip.amazonaws.com)
+curl -s "https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ip=$IP"
+
+# 4. Setup the HTTPS config (Caddyfile)
 cat <<EOF > Caddyfile
 $DOMAIN.duckdns.org {
-    reverse_proxy localhost:5678
+    reverse_proxy n8n:5678
 }
 EOF
 
-# 3. Launch the HTTPS Provider (Caddy)
-sudo docker run -d --name caddy --restart always \
-  -p 80:80 -p 443:443 \
-  --network host \
-  -v $(pwd)/Caddyfile:/etc/caddy/Caddyfile \
-  -v caddy_data:/data \
-  caddy
-
-# 4. Launch n8n (The Automation Engine)
+# 5. Launch n8n (The Automation Engine)
 sudo docker run -d --name n8n --restart always \
-  -p 5678:5678 \
+  --network n8n-bridge \
   -v /home/ubuntu/n8n-data:/home/node/.n8n \
   -e WEBHOOK_URL="https://$DOMAIN.duckdns.org/" \
   n8nio/n8n
 
+# 6. Launch the HTTPS Provider (Caddy)
+sudo docker run -d --name caddy --restart always \
+  -p 80:80 -p 443:443 \
+  --network n8n-bridge \
+  -v $(pwd)/Caddyfile:/etc/caddy/Caddyfile \
+  -v caddy_data:/data \
+  caddy
+
+# 7. Enable Auto-Sync (Updates IP every 5 mins automatically)
+(crontab -l 2>/dev/null; echo "*/5 * * * * curl -s 'https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ip=' >/dev/null 2>&1") | crontab -
+
 echo "--------------------------------------------------------"
-echo "✅ SETUP INITIATED!"
+echo "✅ SETUP COMPLETE!"
 echo "Wait 2 minutes for the SSL certificate to generate."
 echo "Your n8n link: https://$DOMAIN.duckdns.org"
 echo "--------------------------------------------------------"
