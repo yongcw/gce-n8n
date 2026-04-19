@@ -116,7 +116,7 @@ Because this setup uses `https`, Telegram and other services will work perfectly
 
 ### 3. Saving Your $5 Budget
 To save credits, **STOP** your instance in the Google Cloud Console when not in use. 
-- **To Resume:** Start the instance in the console, SSH back in, and **re-run Phase 3**. Your workflows will be exactly where you left them!
+- **To Resume:** Start the instance in the console and **wait 5 minutes**. The server will automatically wake up n8n, Caddy, and update your IP address. No terminal work required!
 
 ### 4. Port Check
 Ensure your `main.tf` has ports **80** and **443** open in the firewall section. Without these, the HTTPS setup will fail.
