@@ -49,7 +49,7 @@ Once you are **inside** the server terminal (prompt says `ubuntu@n8n-server`), c
 
 ```bash
 # --- ⚠️ EDIT THE TWO LINES BELOW ⚠️ ---
-DOMAIN="http://cheewee.duckdns.org"
+DOMAIN="cheewee"
 TOKEN="907dd992-77fd-437f-a230-ffb75630e523"
 # --------------------------------------
 
