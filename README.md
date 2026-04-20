@@ -49,8 +49,8 @@ Once you are **inside** the server terminal (prompt says `ubuntu@n8n-server`), c
 
 ```bash
 # --- ⚠️ EDIT THE TWO LINES BELOW ⚠️ ---
-DOMAIN="your-subdomain-here"
-TOKEN="your-token-here"
+DOMAIN="http://cheewee.duckdns.org"
+TOKEN="907dd992-77fd-437f-a230-ffb75630e523"
 # --------------------------------------
 
 # 1. Clean up any existing attempts
