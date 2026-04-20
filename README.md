@@ -49,8 +49,8 @@ Once you are **inside** the server terminal (prompt says `ubuntu@n8n-server`), c
 
 ```bash
 # --- ⚠️ EDIT THE TWO LINES BELOW ⚠️ ---
-DOMAIN="cheewee"
-TOKEN="907dd992-77fd-437f-a230-ffb75630e523"
+DOMAIN="yongcheewee"
+TOKEN="f9716404-581b-4a67-8495-264e4e248aca"
 # --------------------------------------
 
 # 1. Clean up any existing attempts
